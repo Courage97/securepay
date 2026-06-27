@@ -1,4 +1,5 @@
 'use client';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -459,7 +460,7 @@ export default function VerifyMFAPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/verify-mfa/', {
+      const response = await fetch('${API_URL}/api/auth/verify-mfa/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -506,7 +507,7 @@ export default function VerifyMFAPage() {
   const handleResend = async () => {
     if (!sessionData || resendCooldown > 0) return;
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/resend-otp/', {
+      const response = await fetch('${API_URL}/api/auth/resend-otp/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id: sessionData.session_id }),

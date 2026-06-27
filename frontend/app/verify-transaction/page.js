@@ -1,4 +1,5 @@
 'use client';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -441,7 +442,7 @@ export default function VerifyTransactionPage() {
     const token = localStorage.getItem('access_token');
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/verify-mfa/', {
+      const response = await fetch('${API_URL}/api/verify-mfa/', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

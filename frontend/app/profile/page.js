@@ -1,7 +1,9 @@
 'use client';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { toast, ToastContainer, Slide } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -530,7 +532,7 @@ export default function ProfilePage() {
     setUpdateLoading(true);
     const token = localStorage.getItem('access_token');
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/auth/profile/', {
+      const res = await fetch('${API_URL}/api/auth/profile/', {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -570,7 +572,7 @@ export default function ProfilePage() {
     const token = localStorage.getItem('access_token');
     try {
       /* Production endpoint — uncomment when available:
-      const res = await fetch('http://127.0.0.1:8000/api/auth/change-password/', {
+      const res = await fetch('${API_URL}/api/auth/change-password/', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(pwForm),

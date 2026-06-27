@@ -1,6 +1,8 @@
 'use client';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast, ToastContainer, Slide } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -497,6 +499,36 @@ export default function AdminDashboard() {
   const [txnPage,       setTxnPage]       = useState(1);
   const [loginPage,     setLoginPage]     = useState(1);
 
+  /* ── API calls (all original logic preserved) ── */
+  const fetchDashboardData = useCallback(async (token) => {
+    try {
+      const res = await fetch('${API_URL}/api/admin/dashboard/', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) { setDashboardData(await res.json()); }
+      else if (res.status === 403) { toast.error('Admin access required.'); router.push('/dashboard'); }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  }, [router]);
+
+  const fetchUsers = useCallback(async (token) => {
+    try {
+      const res = await fetch('${API_URL}/api/admin/users/', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) { const d = await res.json(); setUsers(d.users || []); }
+    } catch (e) { console.error(e); }
+  }, []);
+
+  const fetchTransactions = useCallback(async (token) => {
+    try {
+      const res = await fetch('${API_URL}/api/admin/transactions/', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) { const d = await res.json(); setTransactions(d.transactions || []); }
+    } catch (e) { console.error(e); }
+  }, []);
+
   /* ── bootstrap ── */
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -508,37 +540,7 @@ export default function AdminDashboard() {
       fetchUsers(token);
       fetchTransactions(token);
     } catch { router.push('/login'); }
-  }, [router]);
-
-  /* ── API calls (all original logic preserved) ── */
-  const fetchDashboardData = async (token) => {
-    try {
-      const res = await fetch('http://127.0.0.1:8000/api/admin/dashboard/', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) { setDashboardData(await res.json()); }
-      else if (res.status === 403) { toast.error('Admin access required.'); router.push('/dashboard'); }
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  };
-
-  const fetchUsers = async (token) => {
-    try {
-      const res = await fetch('http://127.0.0.1:8000/api/admin/users/', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) { const d = await res.json(); setUsers(d.users || []); }
-    } catch (e) { console.error(e); }
-  };
-
-  const fetchTransactions = async (token) => {
-    try {
-      const res = await fetch('http://127.0.0.1:8000/api/admin/transactions/', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) { const d = await res.json(); setTransactions(d.transactions || []); }
-    } catch (e) { console.error(e); }
-  };
+  }, [router, fetchDashboardData, fetchUsers, fetchTransactions]);
 
   const handleLogout = () => {
     ['access_token','refresh_token','user'].forEach(k => localStorage.removeItem(k));

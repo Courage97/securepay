@@ -1,4 +1,5 @@
 'use client';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -530,7 +531,7 @@ export default function DashboardPage() {
   /* ── fetch transactions ── */
   const fetchTransactions = useCallback(async (token) => {
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/history/', {
+      const res = await fetch('${API_URL}/api/history/', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -576,7 +577,7 @@ export default function DashboardPage() {
     setSendBanner(null);
     const token = localStorage.getItem('access_token');
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/send/', {
+      const res = await fetch('${API_URL}/api/send/', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(sendForm),
@@ -620,7 +621,7 @@ export default function DashboardPage() {
     setAddLoading(true);
     const token = localStorage.getItem('access_token');
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/add-funds/', {
+      const res = await fetch('${API_URL}/api/add-funds/', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: amt }),

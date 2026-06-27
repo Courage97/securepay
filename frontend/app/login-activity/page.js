@@ -1,4 +1,5 @@
 'use client';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -535,7 +536,7 @@ export default function LoginActivityPage() {
   /* ── fetch ── */
   const fetchLoginHistory = async (token) => {
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/auth/login-history/', {
+      const res = await fetch('${API_URL}/api/auth/login-history/', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
