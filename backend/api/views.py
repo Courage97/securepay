@@ -23,6 +23,7 @@ from datetime import datetime
 from .models import User, LoginAttempt, PasswordResetToken, TrustedDevice, TrustedLocation, OTPVerification
 from transaction.models import Transaction
 import uuid
+import os
 
 def send_sms_otp(phone_number, otp_code):
     """Send OTP via SMS using Twilio"""
@@ -48,12 +49,21 @@ class MLRiskAssessment:
     
     def __init__(self):
         try:
-            self.model = joblib.load('ml_engine/pharming_model.pkl')
-            self.scaler = joblib.load('ml_engine/scaler.pkl')
+            # Use absolute path - works both locally and on Render
+            BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            model_path = os.path.join(BASE_DIR, 'ml_engine', 'pharming_model.pkl')
+            scaler_path = os.path.join(BASE_DIR, 'ml_engine', 'scaler.pkl')
+            
+            print(f"📁 Loading ML model from: {model_path}")
+            print(f"📁 Model exists: {os.path.exists(model_path)}")
+            
+            self.model = joblib.load(model_path)
+            self.scaler = joblib.load(scaler_path)
             self.model_loaded = True
-        except:
+            print("✅ ML model loaded successfully!")
+        except Exception as e:
             self.model_loaded = False
-            print("⚠️ ML model not loaded - using fallback risk assessment")
+            print(f"⚠️ ML model not loaded: {e}")
     
     def calculate_risk(self, user, ip_address, device_fingerprint, user_agent):
         """
