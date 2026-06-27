@@ -1,11 +1,11 @@
 'use client';
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast, ToastContainer, Slide } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 /* ─────────────────────────────────────────
    STYLES
 ───────────────────────────────────────── */
@@ -460,7 +460,7 @@ export default function VerifyMFAPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('${API_URL}/api/auth/verify-mfa/', {
+      const response = await fetch(`${API_URL}/api/auth/verify-mfa/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

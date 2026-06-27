@@ -1,11 +1,13 @@
 'use client';
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast, ToastContainer, Slide } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+
 
 /* ─────────────────────────────────────────
    STYLES
@@ -522,7 +524,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('${API_URL}/api/auth/register/', {
+      const response = await fetch(`${API_URL}/api/auth/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

@@ -1,10 +1,11 @@
 'use client';
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast, ToastContainer, Slide } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 /* ─────────────────────────────────────────
    STYLES
@@ -531,7 +532,7 @@ export default function DashboardPage() {
   /* ── fetch transactions ── */
   const fetchTransactions = useCallback(async (token) => {
     try {
-      const res = await fetch('${API_URL}/api/history/', {
+      const res = await fetch(`${API_URL}/api/history/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
