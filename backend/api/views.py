@@ -25,6 +25,83 @@ from transaction.models import Transaction
 import uuid
 import os
 
+def send_otp_email(to_email, username, otp_code, risk_score, risk_level_text):
+    """
+    Send OTP email using Resend API
+    Falls back to Django email backend if Resend not configured
+    """
+    import os
+    resend_key = os.getenv('RESEND_API_KEY', '')
+    
+    if resend_key:
+        # Use Resend API
+        try:
+            import resend
+            resend.api_key = resend_key
+            
+            params = {
+                "from": "SecurePay <onboarding@resend.dev>",  # Use this for testing
+                "to": [to_email],
+                "subject": "SecurePay - Security Verification Required",
+                "text": f"""
+Hello {username},
+
+We detected unusual activity on your account and need to verify your identity.
+
+Your verification code is: {otp_code}
+
+This code will expire in 10 minutes.
+
+If you didn't attempt to login, please secure your account immediately.
+
+Risk Score: {risk_score}/100
+Risk Level: {risk_level_text}
+
+Best regards,
+SecurePay Security Team
+                """
+            }
+            
+            email = resend.Emails.send(params)
+            print(f"✅ Resend email sent to {to_email}: {email}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Resend error: {e}")
+            return False
+    else:
+        # Fallback to Django SMTP
+        try:
+            from django.core.mail import send_mail
+            from django.conf import settings
+            
+            send_mail(
+                subject='SecurePay - Security Verification Required',
+                message=f'''
+Hello {username},
+
+We detected unusual activity on your account and need to verify your identity.
+
+Your verification code is: {otp_code}
+
+This code will expire in 10 minutes.
+
+Risk Score: {risk_score}/100
+Risk Level: {risk_level_text}
+
+Best regards,
+SecurePay Security Team
+                ''',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[to_email],
+                fail_silently=False,
+            )
+            print(f"✅ SMTP email sent to {to_email}")
+            return True
+        except Exception as e:
+            print(f"❌ SMTP email error: {e}")
+            return False
+
 def send_sms_otp(phone_number, otp_code):
     """Send OTP via SMS using Twilio"""
     try:
@@ -396,63 +473,33 @@ def login(request):
         # Determine which method to use (SMS preferred if phone available)
         use_sms = user.phone_number and len(user.phone_number) >= 10
         
-        if use_sms:
-            # Try to send SMS OTP
-            sms_sent = send_sms_otp(user.phone_number, otp_code)
-            if sms_sent:
-                otp_verification.otp_type = 'sms'
-                otp_verification.save()
-                print(f"📱 SMS OTP sent to {user.phone_number}")
-            else:
-                # Fallback to email if SMS fails
-                use_sms = False
-                print(f"⚠️ SMS failed, falling back to email")
-        
         if not use_sms:
-            # Send Email OTP
-            try:
-                send_mail(
-                    subject='SecurePay - Security Verification Required',
-                    message=f'''
-Hello {user.username},
-
-We detected unusual activity on your account and need to verify your identity.
-
-Your verification code is: {otp_code}
-
-This code will expire in 10 minutes.
-
-If you didn't attempt to login, please secure your account immediately.
-
-Risk Score: {risk_score}/100
-Risk Level: {risk_level_text}
-
-Best regards,
-SecurePay Security Team
-                    ''',
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[user.email],
-                    fail_silently=True,
-                )
-                print(f"✅ Email OTP sent to {user.email}")
-            except Exception as e:
-                print(f"⚠️ Email error: {e}")
-        
-        print(f"📧 OTP Code (for testing): {otp_code}")
-        
-        # Mark login as MFA required
-        login_attempt.mfa_required = True
-        login_attempt.save()
-        
-        return Response({
-            'status': 'mfa_required',
-            'message': f'Verification code sent via {"SMS" if use_sms else "email"}',
-            'session_id': session_id,
-            # 'otp_code': otp_code,  # Remove in production
-            'risk_score': risk_score,
-            'risk_level': risk_level,
-            'mfa_method': 'sms' if use_sms else 'email'
-        }, status=status.HTTP_200_OK)
+            # Send Email OTP using Resend
+            email_sent = send_otp_email(
+                to_email=user.email,
+                username=user.username,
+                otp_code=otp_code,
+                risk_score=risk_score,
+                risk_level_text=risk_level_text
+            )
+            if not email_sent:
+                print(f"⚠️ Email failed - OTP for testing: {otp_code}")
+                
+                print(f"📧 OTP Code (for testing): {otp_code}")
+                
+                # Mark login as MFA required
+                login_attempt.mfa_required = True
+                login_attempt.save()
+                
+                return Response({
+                    'status': 'mfa_required',
+                    'message': f'Verification code sent via {"SMS" if use_sms else "email"}',
+                    'session_id': session_id,
+                    # 'otp_code': otp_code,  # Remove in production
+                    'risk_score': risk_score,
+                    'risk_level': risk_level,
+                    'mfa_method': 'sms' if use_sms else 'email'
+                }, status=status.HTTP_200_OK)
     
     # Low Risk: Grant access immediately
     login_attempt.status = 'success'
@@ -733,7 +780,7 @@ SecurePay Security Team
             ''',
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],
-            fail_silently=True,
+            fail_silently=False,
         )
         print(f"✅ Password reset email sent to {user.email}")
         print(f"🔗 Reset link: {reset_link}")
@@ -1091,7 +1138,7 @@ SecurePay Security Team
                 ''',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],
-                fail_silently=True,
+                fail_silently=False,
             )
             print(f"✅ Resent email OTP to {user.email}")
         except Exception as e:
