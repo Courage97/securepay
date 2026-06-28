@@ -622,7 +622,7 @@ export default function DashboardPage() {
     setAddLoading(true);
     const token = localStorage.getItem('access_token');
     try {
-      const res = await fetch('${API_URL}/api/add-funds/', {
+      const res = await fetch(`${API_URL}/api/add-funds/`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: amt }),
